@@ -28,6 +28,7 @@ export type Night = {
   night: string; // YYYY-MM-DD, as in the file name
   rows: DigestRow[]; // sorted by job; empty for an empty file ("nothing ran")
   badLines: number; // lines that didn't parse: counted, never thrown
+  counts: Record<RunStatus, number>; // parsed lines per status, for the board's ok / retry / fail
 };
 
 // Reads runsDir/<night>.jsonl. Returns null when the night has no file (routes answer 404).
