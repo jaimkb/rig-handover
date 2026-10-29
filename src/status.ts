@@ -1,12 +1,22 @@
 import { readdirSync } from 'node:fs';
 import type { RigConfig } from './config.js';
+import { readNight } from './digest/read.js';
+import type { RunStatus } from './digest/types.js';
 import { lastBeat, type Beat } from './heartbeat.js';
+
+// One night on the board. counts is null when the digest reader finds no file for the night.
+export type NightSummary = {
+  night: string;
+  counts: Record<RunStatus, number> | null;
+  badLines: number;
+};
 
 export type Status = {
   adapter: string;
   installed: string;
   lastBeat: Beat | null;
   nights: string[];
+  summaries: NightSummary[];
 };
 
 // Nights on disk = runs/<YYYY-MM-DD>.jsonl, newest first.
@@ -23,10 +33,15 @@ export function nightsOnDisk(runsDir: string): string[] {
 }
 
 export function readStatus(config: RigConfig): Status {
+  const nights = nightsOnDisk(config.runsDir);
   return {
     adapter: config.adapter,
     installed: config.installed,
     lastBeat: lastBeat(),
-    nights: nightsOnDisk(config.runsDir),
+    nights,
+    summaries: nights.map((night) => {
+      const read = readNight(config.runsDir, night);
+      return { night, counts: read?.counts ?? null, badLines: read?.badLines ?? 0 };
+    }),
   };
 }
